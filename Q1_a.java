@@ -109,21 +109,28 @@ public class Q1_a extends Configured implements Tool {
 
                                 // Now we parse the string into a JsonElement so we can dig into it
                                 JsonElement jsonTree = parser.parse(jsonString);
+//                              LOG.debug(jsonTree);
 
+                                JsonObject jsonObject = jsonTree.getAsJsonObject();
+
+                                String maincat = jsonObject.get("main_cat").getAsString();
+                                context.write(new Text(maincat),one);
+                        /*
                                 // Now we'll iterate through every top-level "key" in the JSON structure...
                                 for (Map.Entry<String, JsonElement> entry : jsonTree.getAsJsonObject().entrySet()) {
                                         // When we write to "context" we're passing data to the reducer
                                         // In this case we're passing the JSON field name (e.g. "title") and the number 1 (for 1 instance)
 //                                      LOG.debug("Entry Key: " + entry.getKey());
 //                                      LOG.debug("Entry Key Class: " + entry.getKey().getClass());
-                                        if (entry.getKey().trim().equals("main_cat")) {
+//                                      if (entry.getKey().trim().equals("main_cat")) {
+                                        if (entry.get("main_cat").getAsString()
 //                                              context.write(new Text(entry.getValue().getAsString()),one);
                                                 context.write(new Text(entry.getKey()),one);
                                         }
 
                                         // Now let's get the value of this field for further analysis:
                                         JsonElement jv = entry.getValue();
-                                /*
+
                                         // Report on the field value
                                         if (jv.isJsonNull()) {
                                                 context.write(new Text(entry.getKey()+"-null"),one);
@@ -165,9 +172,8 @@ public class Q1_a extends Configured implements Tool {
                                                 // This should never happen!
                                                 context.write(new Text(entry.getKey()+"-unknown"),one);
                                         }
-                                */
-                                        break;
                                 }
+                        */
 
                                 // Here we increment a counter that we can read when the job is done
                                 rowsProcessed.increment(1);
