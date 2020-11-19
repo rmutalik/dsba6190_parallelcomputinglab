@@ -126,6 +126,10 @@ public class Q2 extends Configured implements Tool {
                                         }
                                 }
 
+                                // This code below post-processes the output by sorting and filtering to the top 100 rows
+                                // bash shell commands, taken from https://unix.stackexchange.com/questions/10524/how-to-numerical-sort-by-last-column
+                                // awk '{print $NF,$0}' q2_output.txt | sort -nr | cut -f2- -d' ' | head -100 > q2.txt
+
                                 // Here we increment a counter that we can read when the job is done
                                 rowsProcessed.increment(1);
                         } catch (Exception e) {
