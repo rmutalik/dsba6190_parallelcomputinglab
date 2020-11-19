@@ -34,13 +34,13 @@ import org.slf4j.LoggerFactory;
  * This Map-Reduce code will go through every Amazon product in rfox12:products
  * It will then output data on the top-level JSON keys
  */
-public class Q2 extends Configured implements Tool {
+public class Q1_a extends Configured implements Tool {
         // Just used for logging
-        protected static final Logger LOG = LoggerFactory.getLogger(Q2.class);
+        protected static final Logger LOG = LoggerFactory.getLogger(Q1_a.class);
 
         // This is the execution entry point for Java programs
         public static void main(String[] args) throws Exception {
-                int res = ToolRunner.run(HBaseConfiguration.create(), new Q2(), args);
+                int res = ToolRunner.run(HBaseConfiguration.create(), new Q1_a(), args);
                 System.exit(res);
         }
 
@@ -51,8 +51,8 @@ public class Q2 extends Configured implements Tool {
                 }
 
                 // Now we create and configure a map-reduce "job"
-                Job job = Job.getInstance(getConf(), "Q2");
-                job.setJarByClass(Q2.class);
+                Job job = Job.getInstance(getConf(), "Q1_a");
+                job.setJarByClass(Q1_a.class);
 
                 // By default we are going to scan every row in the table
                 Scan scan = new Scan();
@@ -97,7 +97,7 @@ public class Q2 extends Configured implements Tool {
                 @Override
                 protected void setup(Context context) {
                         parser = new JsonParser();
-                        rowsProcessed = context.getCounter("Q2", "Rows Processed");
+                        rowsProcessed = context.getCounter("Q1_a", "Rows Processed");
                 }
 
                 // This "map" method is called with every row scanned.
@@ -109,26 +109,18 @@ public class Q2 extends Configured implements Tool {
 
                                 // Now we parse the string into a JsonElement so we can dig into it
                                 JsonElement jsonTree = parser.parse(jsonString);
+//                              LOG.warn(jsonTree);
 
                                 JsonObject jsonObject = jsonTree.getAsJsonObject();
 
-                                // Add JSON elements to String array
-                                JsonArray arr = jsonObject.get("category").getAsJsonArray();
-                                ArrayList<String> category = new ArrayList<String>();
-                                for (int i=0; i<arr.size(); i++) {
-                                        category.add(arr.get(i).getAsString());
+                                String maincat = jsonObject.get("main_cat").getAsString();
+                                if (maincat.startsWith("<")) {
+                                        String pattern = ".*alt=\"([^\"]*)\".*";
+                                        Pattern p = Pattern.compile(pattern);
+                                        Matcher m = p.matcher(maincat);
+                                        while(m.find()) { maincat = m.group(1); }
                                 }
-
-                                // Write to MapReduce job
-                                if ( category.get(0).trim().equals("Clothing, Shoes & Jewelry") ) {
-                                        for (int i=1; i<category.size(); i++) {
-                                                context.write(new Text(category.get(i)), one);
-                                        }
-                                }
-
-                                // This code below post-processes the output by sorting and filtering to the top 100 rows
-                                // bash shell commands, taken from https://unix.stackexchange.com/questions/10524/how-to-numerical-sort-by-last-column
-                                // awk '{print $NF,$0}' q2_output.txt | sort -nr | cut -f2- -d' ' | head -100 > q2.txt
+                                context.write(new Text(maincat),one);
 
                                 // Here we increment a counter that we can read when the job is done
                                 rowsProcessed.increment(1);
